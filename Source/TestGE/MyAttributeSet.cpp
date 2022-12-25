@@ -6,6 +6,7 @@
 #include "AbilitySystemGlobals.h"
 #include "GameplayEffectExtension.h"
 #include "MyCharacter.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 UMyAttributeSet::UMyAttributeSet()
 {
@@ -90,15 +91,21 @@ void UMyAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 
 	if(Data.EvaluatedData.Attribute == GetRageAttribute())
 	{
+		UKismetSystemLibrary::PrintString(GetWorld(), FString::Printf(TEXT("SetRage:%f"), GetRage()));
 		SetRage(FMath::Max(GetRage(), 0.0f));
 	}
 	else if(Data.EvaluatedData.Attribute == GetCriticalChanceAttribute())
 	{
+		UKismetSystemLibrary::PrintString(GetWorld(), FString::Printf(TEXT("SetCritChance:%f"), GetCriticalChance()));
+
+		// This would not recompute the Attribute base GE
+		CriticalChance.SetCurrentValue(FMath::Max(GetCriticalChance(), 0.0f));
+
 		/*
 		 * When using the AttributeBase approach,
 		 * calling SetCriticalChance() here will cause other GE's to modify CriticalChance incorrectly
 		 */
-		//SetCriticalChance(FMath::Max(GetCriticalChance(), 0.0f));
+		// SetCriticalChance(FMath::Max(GetCriticalChance(), 0.0f));
 	}
 }
 
@@ -122,7 +129,7 @@ void UMyAttributeSet::PostAttributeChange(const FGameplayAttribute& Attribute, f
 				//const float CurVal = GetRage();
 				//const float Mod = CurVal * 0.2f;
 				//GetOwningAbilitySystemComponent()->ApplyModToAttribute(UMyAttributeSet::GetCriticalChanceAttribute(), EGameplayModOp::Additive, Mod);
-
+				
 				const float Diff = NewValue - OldValue;
 				const float Mod = Diff * 0.2f;
 				const float NewCriticalChance = GetCriticalChance() + Mod;
